@@ -1,0 +1,44 @@
+from flask import Flask,render_template,request,jsonify
+from tensorflow.keras.models import load_model
+from tensorflow.keras.preprocessing import image
+import numpy as np
+import PIL
+import tensorflow as tf
+from PIL import Image
+import os
+import base64
+import json
+from io import BytesIO
+import io
+import cv2
+os.environ['TF_XLA_FLAGS'] = '--tf_xla_enable_xla_devices'
+
+app=Flask(__name__)
+
+# @app.route('/page')
+# def add():
+#     return render_template('data.html')
+modelx = load_model('E:/Models/dogcatModel/dogcat_model_bak.h5')
+
+@app.route('/result',methods=['POST'])
+def postJsonHandler():
+    value=None
+    if request.method == 'POST':
+        file = request.files['image']
+        img = Image.open(file.stream).convert('RGB')
+        image = tf.keras.preprocessing.image.img_to_array(img)
+        imageX=tf.image.resize(image,(224,224))
+        imageX=imageX/255
+        imgZ = np.expand_dims(imageX, axis=0)
+        prediction = modelx.predict(imgZ, batch_size=None, steps=1)
+        if (prediction[:, :] > 0.5):
+            value="Dog"
+        else:
+            value="Cat"
+
+    return value
+
+
+
+if __name__=="__main__":
+    app.run(debug=True)
